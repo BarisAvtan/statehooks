@@ -1,43 +1,35 @@
-import React,{useState,useEffect}  from 'react'
-import ReactDOM from 'react-dom'
-// import '.../styles/main.scss'
+import React,{useEffect, useReducer}  from 'react'
+import NoteList from './NoteList'
+import Addnoteform from './Addnoteform'
+import notesReducer from './reducers/notes'
+import NotesContext from '././Context/notecontext'
 
-const Noteapp = () => {
-    const [notes, setNotes] = useState([])
-    const [title, setTitle] = useState('')
-    const [body, setBody] = useState('')
-
+const NoteApp = () => {
+    // const [notes, setNotes] = useState([])
+   
+    const [notes, dispatch] = useReducer(notesReducer, [])
     useEffect(() => {
         const notesData = JSON.parse(localStorage.getItem('notes'))
         if(notesData) {
-            setNotes(notesData)
+            dispatch({type: 'POPULATE_NOTES', notes: notesData})
         }
-    },[])// [] yazarsak sayfa yüklendiğinde 1 kez çalısır.
+    },[])
 
     useEffect(()=> {
         localStorage.setItem('notes', JSON.stringify(notes))
-    }, [notes]) //[notes] sadece note üzerinde bir değişiklik olduğunda çalışır
+    }, [notes])
 
-    const addNote = (e) => {
-        e.preventDefault();
-        if(title) {
-            setNotes(
-                [
-                    ...notes,//  const [notes, setNotes] = useState([]) => notes liste
-                    {title,body}
-                ]
-            )
-            setTitle('')
-            setBody('')
-        }
-    }
 
     const removeNote = (title) => {
-        setNotes(notes.filter((note) => note.title !==title))
+        dispatch({
+            type: 'REMOVE_NOTE',
+            title
+        })
     }
 
     return (
-        <div className="container p-5">
+        <NotesContext.Provider value={{notes,dispatch}}>
+            <div className="container p-5">
             <div className="card mb-3">
                 <div className="card-header">Notes</div>
                 {
@@ -45,17 +37,7 @@ const Noteapp = () => {
                         <table className="table table-sm table-striped mb-0">
                             <tbody>
                                 {
-                                    notes.map((note) => (
-                                        <tr key={note.title}>
-                                            <td style={{width: '40%'}}>{note.title}</td>
-                                            <td>{note.body}</td>
-                                            <td style={{width: '3%'}}>
-                                                <button onClick={()=> removeNote(note.title)} className="btn btn-sm btn-danger">
-                                                    <i className="far fa-times"></i>
-                                                </button>
-                                            </td>
-                                        </tr>    
-                                    ))
+                                    <NoteList />
                                 }
                             </tbody>
                         </table>
@@ -65,18 +47,12 @@ const Noteapp = () => {
             <div className="card mb-3">
                 <div className="card-header">Add a New Note</div>
                 <div className="card-body">
-                    <form onSubmit={addNote}>
-                        <div className="form-group">
-                            <input value={title} onChange={(e) => setTitle(e.target.value)} className="form-control"/>
-                        </div>
-                        <div className="form-group">
-                            <textarea value={body} onChange={(e) => setBody(e.target.value)} className="form-control"></textarea>
-                        </div>
-                        <button className="btn btn-primary btn-block">Add Note</button>
-                    </form>
+                    <Addnoteform />
                 </div>
             </div>
         </div>  
+        </NotesContext.Provider>        
     ) 
 }
-export default Noteapp;
+
+export default NoteApp
